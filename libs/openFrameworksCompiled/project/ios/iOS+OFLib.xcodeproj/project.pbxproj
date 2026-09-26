@@ -1172,7 +1172,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1530;
+				LastUpgradeCheck = 2620;
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "iOS+OFLib" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1409,6 +1409,7 @@
 				OBJROOT = "$(SRCROOT)/../../lib/ios/build/obj/Debug/";
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				WARNING_CFLAGS = (
 					"-Wno-non-virtual-dtor",
@@ -1449,6 +1450,7 @@
 				OBJROOT = "$(SRCROOT)/../../lib/ios/build/obj/Release/";
 				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				WARNING_CFLAGS = (
 					"-Wno-non-virtual-dtor",
 					"-Wno-overloaded-virtual",
