@@ -117,6 +117,20 @@
                 break;
         }
     }
+
+    if(bDoesHWOrientation) {
+        ofOrientation requestedOrientation = ofGetOrientation();
+        switch (requestedOrientation) {
+            case OF_ORIENTATION_90_RIGHT:
+                iOrient = UIInterfaceOrientationLandscapeLeft;
+                break;
+            case OF_ORIENTATION_90_LEFT:
+                iOrient = UIInterfaceOrientationLandscapeRight;
+                break;
+            default:
+                break;
+        }
+    }
     
     BOOL bIsPortrait = UIInterfaceOrientationIsPortrait( iOrient );
 	
