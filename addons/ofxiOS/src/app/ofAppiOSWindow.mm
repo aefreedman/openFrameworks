@@ -240,9 +240,9 @@ void ofAppiOSWindow::setOrientation(ofOrientation toOrientation) {
 
 
     id<UIApplicationDelegate> appDelegate = [UIApplication sharedApplication].delegate;
-    if([appDelegate respondsToSelector:@selector(glViewController)] == NO) {
-        // check app delegate has glViewController,
-        // otherwise calling glViewController will cause a crash.
+    if([appDelegate respondsToSelector:@selector(uiViewController)] == NO) {
+        // check app delegate has uiViewController,
+        // otherwise calling uiViewController will cause a crash.
         return;
     }
     UIViewController * uiViewController = ((ofxiOSAppDelegate *)appDelegate).uiViewController;
