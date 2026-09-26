@@ -105,6 +105,8 @@ void ofAppiOSWindow::setup() {
 	if(settings.setupOrientation == OF_ORIENTATION_UNKNOWN) {
 		settings.setupOrientation = OF_ORIENTATION_DEFAULT;
 	}
+	ofLogNotice("ofAppiOSWindow::setup") << "setupOrientation=" << settings.setupOrientation
+		<< " enableHardwareOrientation=" << settings.enableHardwareOrientation;
 	setOrientation(settings.setupOrientation);
 	if(settings.glesVersion >= ESRendererVersion_20) {
 		currentRenderer = std::shared_ptr<ofBaseRenderer>(new ofGLProgrammableRenderer(this));

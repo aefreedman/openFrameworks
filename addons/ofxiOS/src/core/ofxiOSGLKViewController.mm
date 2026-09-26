@@ -15,6 +15,7 @@
 #include "ofxiOSGLKView.h"
 #import "ofxiOSExtras.h"
 #include "ofAppiOSWindow.h"
+#include "ofLog.h"
 #include <glm/gtc/constants.hpp>
 
 @interface ofxiOSGLKViewController() <EAGLKViewDelegate, GLKViewControllerDelegate> {
@@ -212,6 +213,8 @@
                             animated:(BOOL)animated {
     bAnimated = animated;
 
+    ofLogNotice("ofxiOSGLKViewController") << "rotateToInterfaceOrientation: " << interfaceOrientation
+        << " current=" << currentInterfaceOrientation << " bReadyToRotate=" << bReadyToRotate;
 
     if(bReadyToRotate == NO) {
         pendingInterfaceOrientation = interfaceOrientation;
@@ -431,13 +434,16 @@
     if(bDoesHWOrientation) {
         // Allow rotation between both landscape or both portrait orientations
         if(UIInterfaceOrientationIsLandscape(currentInterfaceOrientation)) {
+            ofLogNotice("ofxiOSGLKViewController") << "supportedInterfaceOrientations: returning MaskLandscape (HW orientation enabled)";
             return UIInterfaceOrientationMaskLandscape;
         } else {
+            ofLogNotice("ofxiOSGLKViewController") << "supportedInterfaceOrientations: returning MaskPortrait (HW orientation enabled)";
             return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
         }
     }
 
     // Software orientation: lock to current orientation only
+    ofLogNotice("ofxiOSGLKViewController") << "supportedInterfaceOrientations: current=" << currentInterfaceOrientation << " (SW orientation)";
     switch (currentInterfaceOrientation) {
         case UIInterfaceOrientationPortrait:
             return UIInterfaceOrientationMaskPortrait;

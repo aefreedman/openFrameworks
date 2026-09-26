@@ -166,7 +166,10 @@
 				break;
 		}
 		
+        ofLogNotice("ofxiOSAppDelegate") << "bDoesHWOrientation=" << bDoesHWOrientation
+            << " requested=" << requested << " interfaceOrientation=" << interfaceOrientation;
         if(!bDoesHWOrientation) {
+            ofLogNotice("ofxiOSAppDelegate") << "Software orientation: rotating to Portrait";
             if([self.uiViewController isKindOfClass:ofxiOSViewController.class]) {
                 ofxiOSViewController *controller = (ofxiOSViewController*)self.uiViewController;
                 [controller rotateToInterfaceOrientation:UIInterfaceOrientationPortrait animated:false];
@@ -175,6 +178,7 @@
                 [controller rotateToInterfaceOrientation:UIInterfaceOrientationPortrait animated:false];
             }
 		} else {
+            ofLogNotice("ofxiOSAppDelegate") << "Hardware orientation: rotating to interfaceOrientation=" << interfaceOrientation;
           	[[UIApplication sharedApplication] setStatusBarOrientation:interfaceOrientation animated:NO];
             if([self.uiViewController isKindOfClass:ofxiOSViewController.class]) {
                 ofxiOSViewController *controller = (ofxiOSViewController*)self.uiViewController;

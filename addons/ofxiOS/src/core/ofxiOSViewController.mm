@@ -14,6 +14,7 @@
 #include "ofAppiOSWindow.h"
 #import "ofxiOSExtras.h"
 #include <glm/gtc/constants.hpp>
+#include "ofLog.h"
 
 
 @interface ofxiOSViewController() <EAGLViewDelegate> {
@@ -144,6 +145,8 @@
                             animated:(BOOL)animated {
     bAnimated = animated;
 
+    ofLogNotice("ofxiOSViewController") << "rotateToInterfaceOrientation: " << interfaceOrientation
+        << " current=" << currentInterfaceOrientation << " bReadyToRotate=" << bReadyToRotate;
 
     if(bReadyToRotate == NO) {
         pendingInterfaceOrientation = interfaceOrientation;
@@ -359,13 +362,16 @@
     if(bDoesHWOrientation) {
         // Allow rotation between both landscape or both portrait orientations
         if(UIInterfaceOrientationIsLandscape(currentInterfaceOrientation)) {
+            ofLogNotice("ofxiOSViewController") << "supportedInterfaceOrientations: returning MaskLandscape (HW orientation enabled)";
             return UIInterfaceOrientationMaskLandscape;
         } else {
+            ofLogNotice("ofxiOSViewController") << "supportedInterfaceOrientations: returning MaskPortrait (HW orientation enabled)";
             return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
         }
     }
 
     // Software orientation: lock to current orientation only
+    ofLogNotice("ofxiOSViewController") << "supportedInterfaceOrientations: current=" << currentInterfaceOrientation << " (SW orientation)";
     switch (currentInterfaceOrientation) {
         case UIInterfaceOrientationPortrait:
             return UIInterfaceOrientationMaskPortrait;
