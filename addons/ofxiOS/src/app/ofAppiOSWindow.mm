@@ -100,8 +100,8 @@ void ofAppiOSWindow::setup(const ofiOSWindowSettings & _settings) {
 }
 
 void ofAppiOSWindow::setup() {
-	
-	
+
+
 	if(settings.setupOrientation == OF_ORIENTATION_UNKNOWN) {
 		settings.setupOrientation = OF_ORIENTATION_DEFAULT;
 	}

@@ -211,8 +211,8 @@
 - (void)rotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
                             animated:(BOOL)animated {
     bAnimated = animated;
-    
-    
+
+
     if(bReadyToRotate == NO) {
         pendingInterfaceOrientation = interfaceOrientation;
         
@@ -424,6 +424,20 @@
 //-------------------------------------------------------------- iOS6.
 #ifdef __IPHONE_6_0
 - (NSUInteger)supportedInterfaceOrientations {
+    // When hardware orientation is enabled, allow rotation between orientations
+    // of the same type (portrait<->portrait or landscape<->landscape)
+    bool bDoesHWOrientation = ofxiOSGetOFWindow()->doesHWOrientation();
+
+    if(bDoesHWOrientation) {
+        // Allow rotation between both landscape or both portrait orientations
+        if(UIInterfaceOrientationIsLandscape(currentInterfaceOrientation)) {
+            return UIInterfaceOrientationMaskLandscape;
+        } else {
+            return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+        }
+    }
+
+    // Software orientation: lock to current orientation only
     switch (currentInterfaceOrientation) {
         case UIInterfaceOrientationPortrait:
             return UIInterfaceOrientationMaskPortrait;

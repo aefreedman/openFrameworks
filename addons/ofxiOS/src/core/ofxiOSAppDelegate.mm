@@ -178,10 +178,10 @@
           	[[UIApplication sharedApplication] setStatusBarOrientation:interfaceOrientation animated:NO];
             if([self.uiViewController isKindOfClass:ofxiOSViewController.class]) {
                 ofxiOSViewController *controller = (ofxiOSViewController*)self.uiViewController;
-                [controller rotateToInterfaceOrientation:UIInterfaceOrientationPortrait animated:false];
+                [controller rotateToInterfaceOrientation:interfaceOrientation animated:false];
             } else if([self.uiViewController isKindOfClass:ofxiOSGLKViewController.class]) {
                 ofxiOSGLKViewController *controller = (ofxiOSGLKViewController *)self.uiViewController;
-                [controller rotateToInterfaceOrientation:UIInterfaceOrientationPortrait animated:false];
+                [controller rotateToInterfaceOrientation:interfaceOrientation animated:false];
             }
 			ofSetOrientation(requested);
         }
