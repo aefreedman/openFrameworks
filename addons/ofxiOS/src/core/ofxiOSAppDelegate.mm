@@ -118,7 +118,9 @@
         }
     }
 
-    if(bDoesHWOrientation) {
+    bool nativeGLKOrientation = bDoesHWOrientation &&
+        ofxiOSGetOFWindow()->getWindowControllerType() == GL_KIT;
+    if(bDoesHWOrientation && !nativeGLKOrientation) {
         ofOrientation requestedOrientation = ofGetOrientation();
         switch (requestedOrientation) {
             case OF_ORIENTATION_90_RIGHT:
@@ -136,7 +138,7 @@
 	
 	CGRect frame = [[UIScreen mainScreen] bounds];
 	
-	if( (!bIsPortrait && bDoesHWOrientation)) {
+	if( (!bIsPortrait && bDoesHWOrientation && !nativeGLKOrientation)) {
 		float tWidth    = frame.size.width;
 		float tHeight   = frame.size.height;
 		frame.size.width    = tHeight;
@@ -191,7 +193,11 @@
                 ofxiOSGLKViewController *controller = (ofxiOSGLKViewController *)self.uiViewController;
                 [controller rotateToInterfaceOrientation:UIInterfaceOrientationPortrait animated:false];
             }
-		} else {
+		} else if(nativeGLKOrientation) {
+            // UIKit owns the GLKit root view's landscape startup and rotation.
+            // Do not force a status-bar orientation or rotate its detached input helper.
+            ofLogNotice("ofxiOSAppDelegate") << "Hardware GLKit orientation: UIKit negotiation";
+        } else {
             ofLogNotice("ofxiOSAppDelegate") << "Hardware orientation: rotating to interfaceOrientation=" << interfaceOrientation;
           	[[UIApplication sharedApplication] setStatusBarOrientation:interfaceOrientation animated:NO];
             if([self.uiViewController isKindOfClass:ofxiOSViewController.class]) {

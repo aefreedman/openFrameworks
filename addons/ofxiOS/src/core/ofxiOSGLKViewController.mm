@@ -68,6 +68,10 @@
     // Software orientation retains the helper-local conversion.
     if(ofxiOSGetOFWindow()->doesHWOrientation()) {
         self.glView.touchCoordinateView = view;
+        // The root GLKView is the displayed view; its initial size also owns
+        // the detached helper's OF dimensions before app setup/first draw.
+        self.glView.frame = view.bounds;
+        [self.glView updateDimensions];
     }
     view.context = [self.glView context];
     self.delegate = self;
@@ -393,7 +397,7 @@
 //borg
 #ifdef __IPHONE_8_0
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
-    
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
     CGPoint center;
     
     center.x = size.width * 0.5;
@@ -407,11 +411,13 @@
             self.glView.center = center;
             self.glView.transform = CGAffineTransformMakeRotation(0);
             self.glView.frame = CGRectMake(0, 0, size.width,size.height);
+            [self.glView updateDimensions];
         }];
     } else {
         self.glView.center = center;
         self.glView.transform = CGAffineTransformMakeRotation(0);
         self.glView.frame = CGRectMake(0, 0, size.width,size.height);
+        [self.glView updateDimensions];
     }
 }
 #endif
@@ -437,14 +443,9 @@
     bool bDoesHWOrientation = ofxiOSGetOFWindow()->doesHWOrientation();
 
     if(bDoesHWOrientation) {
-        // Allow rotation between both landscape or both portrait orientations
-        if(UIInterfaceOrientationIsLandscape(currentInterfaceOrientation)) {
-            ofLogNotice("ofxiOSGLKViewController") << "supportedInterfaceOrientations: returning MaskLandscape (HW orientation enabled)";
-            return UIInterfaceOrientationMaskLandscape;
-        } else {
-            ofLogNotice("ofxiOSGLKViewController") << "supportedInterfaceOrientations: returning MaskPortrait (HW orientation enabled)";
-            return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
-        }
+        // The GLKit hardware app is landscape-only; the cached orientation may
+        // still be portrait before UIKit chooses its initial interface direction.
+        return UIInterfaceOrientationMaskLandscape;
     }
 
     // Software orientation: lock to current orientation only
@@ -467,6 +468,13 @@
     }
     // defaults to orientations selected in the .plist file ('Supported Interface Orientations' in the XCode Project)
     return -1;
+}
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
+    // Used only when UIKit needs a landscape fallback; not a per-frame rotation request.
+    if(ofxiOSGetOFWindow()->doesHWOrientation()) {
+        return UIInterfaceOrientationLandscapeLeft; // OF_ORIENTATION_90_RIGHT
+    }
+    return [super preferredInterfaceOrientationForPresentation];
 }
 - (BOOL)shouldAutorotate {
     return YES;
