@@ -64,6 +64,11 @@
     [super viewDidLoad];
     
     GLKView *view = (GLKView *)self.view;
+    // UIKit displays this view in hardware mode; the separate helper only forwards input.
+    // Software orientation retains the helper-local conversion.
+    if(ofxiOSGetOFWindow()->doesHWOrientation()) {
+        self.glView.touchCoordinateView = view;
+    }
     view.context = [self.glView context];
     self.delegate = self;
     self.preferredFramesPerSecond = 60; //default

@@ -28,6 +28,9 @@ class ofAppiOSWindow;
 @property (readonly, nonatomic, getter=getScreenSize) glm::vec2 * screenSize;
 @property (readonly, nonatomic, getter=getWindowSize) glm::vec2 * windowSize;
 @property (readonly, nonatomic, getter=getWindowPosition) glm::vec2 * windowPos;
+// The GLK controller owns this rendered root view; the detached helper must not own it.
+// Standalone helpers without an owner continue using their own view as before.
+@property (nonatomic, weak) UIView *touchCoordinateView;
 
 + (ofxiOSGLKView *) getInstance;
 
@@ -43,6 +46,7 @@ class ofAppiOSWindow;
 - (void)updateDimensions;
 - (void)destroy;
 - (CGPoint)orientateTouchPoint:(CGPoint)touchPoint;
+- (CGPoint)touchPointForTouch:(UITouch *)touch;
 - (void)resetTouches;
 - (UIImage*)getSnapshot;
 

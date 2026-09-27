@@ -249,6 +249,16 @@ static ofxiOSGLKView * _instanceRef = nil;
     return touchPointOriented;
 }
 
+// The controller binds the displayed GLKView before forwarding hardware-mode touches.
+// Keep the existing software-orientation transform after conversion to OF pixels.
+- (CGPoint)touchPointForTouch:(UITouch *)touch {
+    UIView *coordinateView = self.touchCoordinateView ?: self;
+    CGPoint point = [touch locationInView:coordinateView];
+    point.x *= scaleFactor;
+    point.y *= scaleFactor;
+    return [self orientateTouchPoint:point];
+}
+
 //------------------------------------------------------
 
 -(void) resetTouches {
@@ -273,11 +283,7 @@ static ofxiOSGLKView * _instanceRef = nil;
         
         [activeTouches setObject:@(touchIndex) forKey:[NSValue valueWithPointer:(__bridge void *)touch]];
         
-        CGPoint touchPoint = [touch locationInView:self];
-        
-        touchPoint.x *= scaleFactor; // this has to be done because retina still returns points in 320x240 but with high percision
-        touchPoint.y *= scaleFactor;
-        touchPoint = [self orientateTouchPoint:touchPoint];
+        CGPoint touchPoint = [self touchPointForTouch:touch];
         
         if( touchIndex==0 ){
             window->events().notifyMousePressed(touchPoint.x, touchPoint.y, 0);
@@ -310,11 +316,7 @@ static ofxiOSGLKView * _instanceRef = nil;
     for(UITouch *touch in touches){
         int touchIndex = [[activeTouches objectForKey:[NSValue valueWithPointer:(__bridge void *)touch]] intValue];
         
-        CGPoint touchPoint = [touch locationInView:self];
-        
-        touchPoint.x *= scaleFactor; // this has to be done because retina still returns points in 320x240 but with high percision
-        touchPoint.y *= scaleFactor;
-        touchPoint = [self orientateTouchPoint:touchPoint];
+        CGPoint touchPoint = [self touchPointForTouch:touch];
         
         if( touchIndex==0 ){
             window->events().notifyMouseDragged(touchPoint.x, touchPoint.y, 0);
@@ -344,11 +346,7 @@ static ofxiOSGLKView * _instanceRef = nil;
         
         [activeTouches removeObjectForKey:[NSValue valueWithPointer:(__bridge void *)touch]];
         
-        CGPoint touchPoint = [touch locationInView:self];
-        
-        touchPoint.x *= scaleFactor; // this has to be done because retina still returns points in 320x240 but with high percision
-        touchPoint.y *= scaleFactor;
-        touchPoint = [self orientateTouchPoint:touchPoint];
+        CGPoint touchPoint = [self touchPointForTouch:touch];
         
         if( touchIndex==0 ){
             window->events().notifyMouseReleased(touchPoint.x, touchPoint.y, 0);
@@ -377,11 +375,7 @@ static ofxiOSGLKView * _instanceRef = nil;
     for(UITouch *touch in touches){
         int touchIndex = [[activeTouches objectForKey:[NSValue valueWithPointer:(__bridge void *)touch]] intValue];
         
-        CGPoint touchPoint = [touch locationInView:self];
-        
-        touchPoint.x *= scaleFactor; // this has to be done because retina still returns points in 320x240 but with high percision
-        touchPoint.y *= scaleFactor;
-        touchPoint = [self orientateTouchPoint:touchPoint];
+        CGPoint touchPoint = [self touchPointForTouch:touch];
         
         ofTouchEventArgs touchArgs;
         touchArgs.numTouches = [[event touchesForView:self] count];
