@@ -26,6 +26,8 @@
 // setupSharedSession is to prevent other iOS Classes closing the audio feed, such as AVAssetReader, when reading from disk
 // It is set once on first launch of a AVAudioPlayer and remains as a set property from then on
 - (void) setupSharedSession {
+    // Opt-in apps configure/activate their session before loading players.
+    if ([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"ofxiOSAppManagedAudioSession"] boolValue]) return;
 	static BOOL audioSessionSetup = NO;
 	if(audioSessionSetup) {
 		return;
