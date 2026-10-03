@@ -258,6 +258,9 @@
 }
 
 - (void) audioPlayerEndInterruption:(AVAudioPlayer *)player withFlags:(NSUInteger)flags {
+    // The opt-in app owns interruption recovery too; do not independently replay
+    // interrupted one-shots or compete with its focus/session ordering.
+    if ([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"ofxiOSAppManagedAudioSession"] boolValue]) return;
 #if TARGET_OS_IOS || (TARGET_OS_IPHONE && !TARGET_OS_TV)
     if(flags == AVAudioSessionInterruptionOptionShouldResume) {
 		[self.player play];
