@@ -109,6 +109,7 @@
 }
 
 - (void)glkViewControllerUpdate:(GLKViewController *)controller {
+    if (self.paused && [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIApplicationSceneManifest"]) return;
     [self.glView update];
 }
 
@@ -118,6 +119,8 @@
 
 - (void) glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
+    // UIKit can request snapshot/layout draws even with the display link paused.
+    if (self.paused && [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIApplicationSceneManifest"]) return;
     [view bindDrawable];
     [self.glView draw];
 }
