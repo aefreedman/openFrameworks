@@ -43,6 +43,60 @@
 #include "ofUtils.h"
 #include "ofLog.h"
 
+// Sunburn uses one application scene and one process-wide OF app/controller.
+// Keep these classes in the existing compilation unit so the static library
+// links the manifest-named scene delegate with the application delegate.
+@interface ofxiOSAppDelegate ()
+@property (nonatomic) BOOL sceneHasFocus;
+- (BOOL)usesSceneLifecycle;
+- (void)configureRootViewController;
+- (void)connectWindowScene:(UIWindowScene *)scene;
+- (void)setSceneActive:(BOOL)active;
+- (void)finishSceneRendering;
+@end
+
+@interface ofxiOSSceneDelegate : UIResponder <UIWindowSceneDelegate>
+@property (nonatomic, strong) UIWindow *window;
+@end
+
+@implementation ofxiOSSceneDelegate
+
+- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session
+      options:(UISceneConnectionOptions *)connectionOptions {
+    if (![scene isKindOfClass:UIWindowScene.class] ||
+        ![session.role isEqualToString:UIWindowSceneSessionRoleApplication]) return;
+    ofxiOSAppDelegate *delegate = ofxiOSGetAppDelegate();
+    [delegate connectWindowScene:(UIWindowScene *)scene];
+    if (delegate.window.windowScene == scene) self.window = delegate.window;
+}
+
+- (void)sceneDidBecomeActive:(UIScene *)scene {
+    if (self.window.windowScene == scene) [ofxiOSGetAppDelegate() setSceneActive:YES];
+}
+
+- (void)sceneWillResignActive:(UIScene *)scene {
+    if (self.window.windowScene == scene) [ofxiOSGetAppDelegate() setSceneActive:NO];
+}
+
+- (void)sceneDidEnterBackground:(UIScene *)scene {
+    if (self.window.windowScene == scene) [ofxiOSGetAppDelegate() finishSceneRendering];
+}
+
+- (void)sceneDidDisconnect:(UIScene *)scene {
+    if (self.window.windowScene != scene) return;
+    ofxiOSAppDelegate *delegate = ofxiOSGetAppDelegate();
+    [delegate setSceneActive:NO];
+    [delegate finishSceneRendering];
+    self.window.hidden = YES;
+    self.window.rootViewController = nil;
+    delegate.window = nil;
+    self.window = nil;
+    // Retain the controller in the process delegate: destroying the GL helper
+    // destroys the singleton OF app. Reconnection reuses it, never reruns setup.
+}
+
+@end
+
 @implementation ofxiOSAppDelegate
 
 @synthesize currentScreenIndex;
@@ -53,18 +107,20 @@
 	self.uiViewController = nil;
 }
 
+- (BOOL)usesSceneLifecycle {
+    return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIApplicationSceneManifest"] != nil;
+}
+
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
-	
-    self.window = [[UIWindow alloc] initWithFrame: [[UIScreen mainScreen] bounds]];
-	[self.window makeKeyAndVisible];
-    
     currentScreenIndex = 0;
     
     // set the root application path
     ofSetDataPathRoot(of::filesystem::path([[NSString stringWithFormat:@"%@/", [[NSBundle mainBundle] resourcePath]] cStringUsingEncoding:NSUTF8StringEncoding]));
     
 	// show or hide status bar depending on OF_WINDOW or OF_FULLSCREEN
-    [[UIApplication sharedApplication] setStatusBarHidden:(ofxiOSGetOFWindow()->getWindowMode() == OF_FULLSCREEN)];
+    if (![self usesSceneLifecycle]) {
+        [[UIApplication sharedApplication] setStatusBarHidden:(ofxiOSGetOFWindow()->getWindowMode() == OF_FULLSCREEN)];
+    }
 	
     // Listen to did rotate event
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
@@ -89,11 +145,37 @@
 				   selector:@selector(handleScreenModeDidChangeNotification:)
 					   name:UIScreenModeDidChangeNotification object:nil];
 	}
-    
-    
+
+    if ([self usesSceneLifecycle]) return; // The scene owns window creation.
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    [self configureRootViewController];
+    [self.window makeKeyAndVisible];
+}
+
+- (void)connectWindowScene:(UIWindowScene *)scene {
+    if (self.window) {
+        if (self.window.windowScene != scene) {
+            ofLogError("ofxiOSAppDelegate") << "Only one Sunburn window scene is supported";
+        }
+        return;
+    }
+    self.window = [[UIWindow alloc] initWithWindowScene:scene];
+    [self configureRootViewController];
+    ofxiOSGLKViewController *controller = ofxiOSGetGLKViewController();
+    controller.pauseOnWillResignActive = NO;
+    controller.resumeOnDidBecomeActive = NO;
+    controller.paused = YES;
+    self.window.rootViewController = self.uiViewController;
+    [self.window makeKeyAndVisible];
+}
+
+- (void)configureRootViewController {
+    if (self.uiViewController) return;
     bool bDoesHWOrientation = ofxiOSGetOFWindow()->doesHWOrientation();
     
-    UIInterfaceOrientation iOrient  = [[UIApplication sharedApplication] statusBarOrientation];
+    UIInterfaceOrientation iOrient = self.window.windowScene
+        ? self.window.windowScene.interfaceOrientation
+        : [[UIApplication sharedApplication] statusBarOrientation];
     // is the os version less than 6.0? 
     if( [[[UIDevice currentDevice] systemVersion] compare:@"6.0" options:NSNumericSearch] == NSOrderedAscending ) {
 		iOrient = UIInterfaceOrientationPortrait;
@@ -136,7 +218,7 @@
     
     BOOL bIsPortrait = UIInterfaceOrientationIsPortrait( iOrient );
 	
-	CGRect frame = [[UIScreen mainScreen] bounds];
+    CGRect frame = self.window.bounds;
 	
 	if( (!bIsPortrait && bDoesHWOrientation && !nativeGLKOrientation)) {
 		float tWidth    = frame.size.width;
@@ -213,8 +295,37 @@
     }
 }
 
+// Scene focus owns both GLKit scheduling and OF focus delivery. Calls are
+// idempotent so disconnect after resign cannot pause/mute the game twice.
+- (void)setSceneActive:(BOOL)active {
+    if (self.sceneHasFocus == active || !self.uiViewController) return;
+    self.sceneHasFocus = active;
+    ofxiOSGLKViewController *controller = ofxiOSGetGLKViewController();
+    if (active) {
+        ofxiOSAlerts.gotFocus();
+        controller.paused = NO;
+    } else {
+        controller.paused = YES;
+        ofxiOSAlerts.lostFocus();
+        [self finishSceneRendering];
+    }
+}
+
+- (void)finishSceneRendering {
+    ofxiOSGLKViewController *controller = ofxiOSGetGLKViewController();
+    GLKView *view = (GLKView *)controller.viewIfLoaded;
+    if (!view.context) return;
+    controller.paused = YES;
+    EAGLContext *previous = [EAGLContext currentContext];
+    if ([EAGLContext setCurrentContext:view.context]) {
+        glFinish();
+        [EAGLContext setCurrentContext:previous];
+    }
+}
+
 //------------------------------------------------------------------------------------------- application delegate callbacks.
 - (void)applicationWillResignActive:(UIApplication *)application {
+    if ([self usesSceneLifecycle]) return;
 	if(ofxiOSGetOFWindow()->getWindowControllerType() == CORE_ANIMATION)
     	[ofxiOSGetGLView() stopAnimation];
 	ofxiOSAlerts.lostFocus();
@@ -222,10 +333,12 @@
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
+    if ([self usesSceneLifecycle]) return;
 	glFinish();
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
+    if ([self usesSceneLifecycle]) return;
 	if(ofxiOSGetOFWindow()->getWindowControllerType() == CORE_ANIMATION)
     	[ofxiOSGetGLView() startAnimation];
 	

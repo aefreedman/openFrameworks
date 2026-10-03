@@ -142,7 +142,9 @@ ofxiOSDeviceInfo ofxiOSGetDeviceInfo(){
 
 //--------------------------------------------------------------
 UIWindow * ofxiOSGetUIWindow() {
-    return [[UIApplication sharedApplication] keyWindow];
+    // Sunburn's process delegate retains the one game window; do not select a
+    // keyboard/system window or an unrelated scene through application globals.
+    return [ofxiOSGetAppDelegate() window];
 }
 
 
