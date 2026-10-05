@@ -36,6 +36,9 @@ public:
     float getPosition() const;
     int getPositionMS() const;
     bool isPlaying() const;
+    // Separate from confirmed playing; false for legacy/non-opted-in wrappers.
+    bool isPlaybackPending() const;
+    void cancelPendingPlayback();
     float getSpeed() const;
     float getPan() const;
     bool isLoaded() const;

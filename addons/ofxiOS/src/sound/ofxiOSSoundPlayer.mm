@@ -141,6 +141,14 @@ bool ofxiOSSoundPlayer::isPlaying()  const{
     return [(__bridge AVSoundPlayer *)soundPlayer isPlaying];
 }
 
+bool ofxiOSSoundPlayer::isPlaybackPending() const {
+    return soundPlayer != NULL && [(__bridge AVSoundPlayer *)soundPlayer isPlaybackPending];
+}
+
+void ofxiOSSoundPlayer::cancelPendingPlayback() {
+    if(soundPlayer != NULL) [(__bridge AVSoundPlayer *)soundPlayer cancelPendingPlayback];
+}
+
 float ofxiOSSoundPlayer::getSpeed()  const{
     if(soundPlayer == NULL) {
         return 0;

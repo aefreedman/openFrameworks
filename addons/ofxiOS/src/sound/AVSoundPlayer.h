@@ -34,6 +34,12 @@
 - (void)pause;
 - (void)stop;
 
+// Opt-in replay ownership: after unpublished loading, all control/property
+// access must be on main. Do not access .player directly during preparation.
+// Cancellation only invalidates pending starts; active-voice muting stays app-owned.
+- (void)cancelPendingPlayback;
+- (BOOL)isPlaybackPending;
+
 - (BOOL)isLoaded;
 - (BOOL)isPlaying;
 
